@@ -1,0 +1,31 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server
+    container_name: rcrs-server
+    volumes:
+      - ./rcrs-server/launch-server.sh:/scripts/launch-server.sh:ro
+      - ./rcrs-server/logs:/app/rcrs-server/logs/log
+    environment:
+      - MAP_NAME
+      - RUN_TYPE
+    command: >
+      bash -c "/scripts/launch-server.sh"
+
+  agent:
+    depends_on:
+      - server
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: agent
+    container_name: rcrs-agent
+    volumes:
+      - ../ait-rescue:/app/rcrs-agent
+      - ./rcrs-agent/launch-agent.sh:/scripts/launch-agent.sh:ro
+    environment:
+      - RUN_TYPE
+    command: >
+      bash -c "/scripts/launch-agent.sh"
