@@ -10,7 +10,24 @@ case "$RUN_TYPE" in
     touch /app/shared/precompute.done
     ;;
   comprun)
-    ./launch.sh -h server -all
+    ./launch.sh -h server -all &
+    AGENT_PID=$!
+    echo "Agent started with PID $AGENT_PID"
+    echo "Waiting for comprun to finish..."
+    
+    while [ ! -f /app/shared/comprun.done ]
+    do
+      sleep 5
+    done
+
+    echo "Done file found. Shutting down agent..."
+    rm /app/shared/comprun.done
+
+    kill $AGENT_PID
+    wait $AGENT_PID
+
+    echo "Agent shut down."
+    exit 0
     ;;
   *)
     echo "Unknown RUN_TYPE: $RUN_TYPE"

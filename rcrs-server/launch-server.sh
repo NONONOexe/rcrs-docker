@@ -26,6 +26,8 @@ case "$RUN_TYPE" in
     ;;
   comprun)
     ./start-comprun.sh -m ../maps/${MAP_NAME}/map -c ../maps/${MAP_NAME}/config -g
+    echo "Comprun finished. Creating done file..."
+    touch /app/shared/comprun.done
     ;;
   *)
     echo "Unknown RUN_TYPE: $RUN_TYPE"
