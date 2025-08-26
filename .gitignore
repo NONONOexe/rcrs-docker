@@ -1,2 +1,5 @@
-# サーバーのログディレクトリ
+# カスタムマップ用ディレクトリ
+rcrs-server/maps
+
+# サーバのログ用ディレクトリ
 rcrs-server/logs
