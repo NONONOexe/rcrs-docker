@@ -7,10 +7,11 @@ services:
     container_name: rcrs-server
     volumes:
       - ./rcrs-server/launch-server.sh:/scripts/launch-server.sh:ro
-      - ./rcrs-server/maps:/app/rcrs-server/custom-maps:ro
-      - ./rcrs-server/logs:/app/rcrs-server/logs/log
-      - ./shared_data:/app/shared
+      - ./rcrs-server/custom-maps:/app/rcrs-server/custom-maps:ro
+      - ./results:/app/results
+      - shared_data:/app/shared
     environment:
+      - EXPERIMENT_NAME
       - MAP_NAME
       - RUN_TYPE
     command: >
@@ -27,8 +28,10 @@ services:
     volumes:
       - ../ait-rescue:/app/rcrs-agent
       - ./rcrs-agent/launch-agent.sh:/scripts/launch-agent.sh:ro
-      - ./shared_data:/app/shared
+      - ./results:/app/results
+      - shared_data:/app/shared
     environment:
+      - EXPERIMENT_NAME
       - RUN_TYPE
     command: >
       bash -c "/scripts/launch-agent.sh"
