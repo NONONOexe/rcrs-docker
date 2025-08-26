@@ -8,6 +8,7 @@ services:
     volumes:
       - ./rcrs-server/launch-server.sh:/scripts/launch-server.sh:ro
       - ./rcrs-server/logs:/app/rcrs-server/logs/log
+      - ./shared_data:/app/shared
     environment:
       - MAP_NAME
       - RUN_TYPE
@@ -25,7 +26,11 @@ services:
     volumes:
       - ../ait-rescue:/app/rcrs-agent
       - ./rcrs-agent/launch-agent.sh:/scripts/launch-agent.sh:ro
+      - ./shared_data:/app/shared
     environment:
       - RUN_TYPE
     command: >
       bash -c "/scripts/launch-agent.sh"
+
+volumes:
+  shared_data:
