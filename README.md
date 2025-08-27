@@ -34,7 +34,7 @@ docker compose build
 
 ```sh
 # コンテナの起動・シミュレーションの開始
-docker compose --env-file [任意の実験条件に対応するenvファイル] up
+docker compose --env-file [任意の実験条件に対応するenvファイル] up server agent
 
 # コンテナの削除（必要に応じて）
 docker compose down
