@@ -36,5 +36,21 @@ services:
     command: >
       bash -c "/scripts/launch-agent.sh"
 
+  ringo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ringo
+    container_name: ringo-viewer
+    volumes:
+      - ./results:/app/results:ro
+      - ./ringo-viewer/launch-ringo.sh:/scripts/launch-ringo.sh:ro
+    environment:
+      - EXPERIMENT_NAME
+    ports:
+      - "3000:3000"
+    command: >
+      bash -c "/scripts/launch-ringo.sh"
+
 volumes:
   shared_data:

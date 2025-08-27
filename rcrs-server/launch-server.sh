@@ -83,9 +83,10 @@ case "$RUN_TYPE" in
     rm /app/shared/precompute.done
     kill -- "-$PGID"
     sleep 2
-    mv console.log ../logs/log/console.log
 
     # Archive logs
+    mkdir -p ../logs/log
+    mv console.log ../logs/log/console.log
     archive_logs
 
     echo "Server shut down."
@@ -109,6 +110,7 @@ case "$RUN_TYPE" in
     # Start watchdog to monitor kernel log for shutdown message
     LOG_FILE="../logs/log/kernel.log"
     SHUTDOWN_MESSAGE="INFO kernel : Kernel has shut down"
+    mkdir -p ../logs/log
     touch "$LOG_FILE"
     (
       tail -f -n 0 "$LOG_FILE" | while read -r line; do

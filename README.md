@@ -34,11 +34,19 @@ docker compose build
 
 ```sh
 # コンテナの起動・シミュレーションの開始
-# 終了はCtrl + Cで強制終了
 docker compose --env-file [任意の実験条件に対応するenvファイル] up
 
-# コンテナの削除
+# コンテナの削除（必要に応じて）
 docker compose down
+```
+
+### 4. シミュレーション結果の可視化
+
+シミュレーション結果は`results`ディレクトリに各実験ごとに保管されます．この結果はringo-viewerを用いて可視化できます．[ringo-viewer](https://github.com/ringo-ringo-ringo/ringo-viewer)はロボカップレスキューシミュレーションの結果をウェブブラウザ上に可視化するツールです．シミュレーション内で動作するそれぞれのエージェントの振る舞いや知覚情報を確認できます．
+
+```sh
+# ringo-viewerによる結果の可視化（Ctrl+Cで終了）
+docker compose --env-file [任意の実験条件に対応するenvファイル] up ringo
 ```
 
 ## 実験条件の設定
@@ -93,3 +101,9 @@ rcrs-docker/
 ## ライセンス
 
 このプロジェクトは[MITライセンス](LICENSE)に基づいています．なお，rcrs-serverは[修正BSDライセンス](https://github.com/roborescue/rcrs-server/blob/master/LICENSE)に基づいています．利用時はそれぞれのライセンスに基づく取り扱いをお願いします．
+
+## 関連リンク
+
+- [ロボカップレスキューシミュレーション公式サイト](https://rescuesim.robocup.org/)
+- [ait-rescue（近日公開予定）](https://github.com/NONONOexe/ait-rescue)
+- [ringo-viewer](https://github.com/ringo-ringo-ringo/ringo-viewer)
