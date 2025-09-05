@@ -38,6 +38,7 @@ case "$RUN_TYPE" in
     ./launch.sh -h server -all  2>&1 | tee console.log &
 
     # Get the PID of the agent process
+    sleep 60
     AGENT_JAVA_PID=$(pgrep -f "adf.core.Main" | head -n 1)
     if [ -z "$AGENT_JAVA_PID" ]; then
       echo "[ERROR] Failed to find the agent's main Java process." >&2
