@@ -30,15 +30,23 @@ docker compose build
 
 ### 3. サービスの起動・終了
 
-`docker compose up`コマンドでサーバとエージェントを起動します．サーバはイメージの段階でGitからダウンロードしていますが，エージェントは適宜開発することを想定し，バインドマウントしたものを用います．どのディレクトリをエージェントのディレクトリとしてマウントするかは，`compose.yaml`に設定されているため，適宜変更してください．デフォルトでは，このリポジトリと同階層の`ait-rescue`をマウントするようにしています．実行後，ログは`rcrs-server/logs`に保管されています．
+`docker compose up`コマンドでサーバとエージェントを起動します．サーバはイメージの段階でGitからダウンロードしていますが，エージェントは適宜開発することを想定し，バインドマウントしたものを用います．どのディレクトリをエージェントのディレクトリとしてマウントするかは，`compose.yaml`に設定されているため，適宜変更してください．デフォルトでは，このリポジトリと同階層の`ait-rescue`をマウントするようにしています．
 
 ```sh
 # コンテナの起動・シミュレーションの開始
-docker compose --env-file [任意の実験条件に対応するenvファイル] up server agent
+docker compose --env-file [任意の実験条件に対応するenvファイル] up server agent-custom
 
 # コンテナの削除（必要に応じて）
 docker compose down
 ```
+
+また，サンプルエージェント（adf-sample-agent-java）を動作させたい場合には，次のように実行できます．`agent-sample`はあらかじめサンプルエージェントを含めたイメージとして用意しています．
+
+```
+docker compose --env-file [任意の実験条件に対応するenvファイル] up server agent-sample
+```
+
+他にも，エージェントを用意したい場合には，同様にして，Dockerfileのステージやserviceを追加してください．
 
 ### 4. シミュレーション結果の可視化
 
@@ -78,7 +86,7 @@ docker compose --env-file [任意の実験条件に対応するenvファイル] 
 
 ### 起動の種類（`RUN_TYPE`）
 
-`RUN_TYPE`には，事前計算（`precompute`）か，本シミュレーション（`comprun`）かを選択します．
+`RUN_TYPE`には，事前計算（`precompute`）か，本シミュレーション（`comprun`）かを選択します．実際には，事前計算と本シミュレーションを連続で実行したい場合が多いため，このリポジトリで用意している`.env`ファイルでは，設定せず，バッチスクリプトを用意して，その中で設定しています（`comprun.bat`を参照）．
 
 ## ディレクトリ構成
 
@@ -90,12 +98,15 @@ rcrs-docker/
 ├── Dockerfile
 ├── config/                # 設定ファイル用ディレクトリ
 ├── rcrs-server/           # サーバ用ディレクトリ
-│   ├── launch-server.sh
-│   └── custom-maps/      # カスタムマップ用ディレクトリ
+│  ├── launch-server.sh    # サーバ起動スクリプト
+│  └── custom-maps/        # カスタムマップ用ディレクトリ
 ├── rcrs-agent/            # エージェント用ディレクトリ
-│   └── launch-agent.sh
+│  └── launch-agent.sh     # エージェント起動スクリプト
+├── ringo-viewer/          # ringo-viewer用ディレクトリ
+│  └── launch-ringo.sh     # ringo-viewer起動スクリプト
+├── rcrs-agent/            # エージェント用ディレクトリ
 ├── results/               # 結果（ログ）保存用ディレクトリ
-└── README.md
+└── README.md              # この資料
 ```
 
 ## ライセンス

@@ -6,7 +6,7 @@ if [ -z "$EXPERIMENT_NAME" ]; then
   exit 1
 fi
 
-SOURCE_DIR="/app/results/${EXPERIMENT_NAME}/server"
+SOURCE_DIR="/app/results/${EXPERIMENT_NAME}/comprun/server/logs"
 TARGET_DIR="/app/ringo-viewer/public/logs/rescue.log"
 
 echo ">>> Preparing logs for viewer: $EXPERIMENT_NAME"

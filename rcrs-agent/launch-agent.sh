@@ -1,21 +1,70 @@
 #!/bin/bash
 set -e
 
-archive_logs() {
-  if [ -n "$EXPERIMENT_NAME" ]; then
-    echo ">>> Archiving logs for experiment: $EXPERIMENT_NAME"
+RESULT_DIR="/app/results/${EXPERIMENT_NAME}/${RUN_TYPE}/agent"
+RESULT_PRECOMP_DIR="/app/results/${EXPERIMENT_NAME}/precompute/precomp_data"
+RESULT_LOG_DIR="${RESULT_DIR}/logs"
 
-    SOURCE_LOG_DIR="/app/rcrs-agent/logs"
-    DEST_DIR="/app/results/${EXPERIMENT_NAME}/agent"
+LOG_DIR="/app/rcrs-agent/logs"
+PRECOMP_DIR="/app/rcrs-agent/precomp_data"
 
-    mkdir -p "$DEST_DIR"
-
-    cp -a "$SOURCE_LOG_DIR/." "$DEST_DIR/"
-
-    echo "Logs archived to: $DEST_DIR"
-  else
-    echo ">>> EXPERIMENT_NAME not set. Skipping log archiving."
+save_precompute_data() {
+  if [ ! -n "$EXPERIMENT_NAME" ]; then
+    echo ">>> EXPERIMENT_NAME not set. Skipping save precompute data."
+    return
   fi
+
+  echo ">>> Save precompute data for experiment: $EXPERIMENT_NAME"
+
+  if [ -d "$RESULT_PRECOMP_DIR" ]; then
+    echo "    -> Removing precompute data directory: $RESULT_PRECOMP_DIR"
+    rm -rf "$RESULT_PRECOMP_DIR"
+  fi
+  
+  mkdir -p "$RESULT_PRECOMP_DIR"
+  cp -a "$PRECOMP_DIR/." "$RESULT_PRECOMP_DIR/"
+  
+  echo "Precompute data are saved to: $RESULT_PRECOMP_DIR"
+}
+
+load_precompute_data() {
+  if [ ! -n "$EXPERIMENT_NAME" ]; then
+    echo ">>> EXPERIMENT_NAME not set. Skipping save precompute data."
+    return
+  fi
+  if [ ! -d "$RESULT_PRECOMP_DIR" ]; then
+    echo ">>> Precompute data is not found. Skipping load precompute data."
+    return
+  fi
+
+  echo ">>> Load precompute data for experiment: $EXPERIMENT_NAME"
+
+  mkdir -p "$PRECOMP_DIR"
+  cp -a "$RESULT_PRECOMP_DIR/." "$PRECOMP_DIR/"
+
+  echo "Precompute data are loaded from: $RESULT_PRECOMP_DIR"
+}
+
+archive_logs() {
+  if [ ! -n "$EXPERIMENT_NAME" ]; then
+    echo ">>> EXPERIMENT_NAME not set. Skipping log archiving."
+    return
+  fi
+
+  echo ">>> Archiving logs for experiment: $EXPERIMENT_NAME"
+
+  if [ -d "$RESULT_LOG_DIR" ]; then
+    echo "    -> Removing existing directory: $RESULT_LOG_DIR"
+    rm -rf "$RESULT_LOG_DIR"
+  fi
+
+  echo "    -> Creating new directory: $RESULT_LOG_DIR"
+  mkdir -p "$RESULT_LOG_DIR"
+
+  echo "    -> Copying logs..."
+  cp -a "$LOG_DIR/." "$RESULT_LOG_DIR/"
+
+  echo "Logs archived to: $RESULT_LOG_DIR"
 }
 
 cd /app/rcrs-agent
@@ -27,6 +76,7 @@ case "$RUN_TYPE" in
     mv console.log logs/console.log
 
     # Archive logs
+    save_precompute_data
     archive_logs
 
     echo "Precompute finished. Creating done file..."
@@ -34,6 +84,9 @@ case "$RUN_TYPE" in
     exit 0
     ;;
   comprun)
+    # Load precomputation data
+    load_precompute_data
+
     # Start the agent in the background
     ./launch.sh -h server -all  2>&1 | tee console.log &
 

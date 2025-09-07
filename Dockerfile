@@ -3,6 +3,9 @@ FROM ubuntu:24.04 AS builder-base
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates git
+# Note: We do not remove /var/lib/apt/lists/* here to avoid
+# repeated 'apt-get update' in downstream images, which
+# would increase network usage.
 
 # Java 17 base for building Java applications
 FROM builder-base AS java-builder
@@ -17,8 +20,13 @@ RUN git clone --depth 1 https://github.com/roborescue/rcrs-server.git
 WORKDIR /app/rcrs-server
 RUN ./gradlew --no-daemon completeBuild
 
-# rcrs-agent
-FROM java-builder AS agent
+# rcrs-agent-sample
+FROM java-builder AS agent-sample
+RUN git clone --depth 1 https://github.com/roborescue/adf-sample-agent-java.git /app/rcrs-agent
+WORKDIR /app/rcrs-agent
+
+# rcrs-agent-custom
+FROM java-builder AS agent-custom
 WORKDIR /app/rcrs-agent
 
 # ringo-viewer

@@ -17,19 +17,37 @@ services:
     command: >
       bash -c "/scripts/launch-server.sh"
 
-  agent:
+  agent-sample:
     depends_on:
       - server
     build:
       context: .
       dockerfile: Dockerfile
-      target: agent
-    container_name: rcrs-agent
+      target: agent-sample
+    container_name: rcrs-agent-sample
     volumes:
-      - ../ait-rescue:/app/rcrs-agent
       - ./rcrs-agent/launch-agent.sh:/scripts/launch-agent.sh:ro
       - ./results:/app/results
       - shared_data:/app/shared
+    environment:
+      - EXPERIMENT_NAME
+      - RUN_TYPE
+    command: >
+      bash -c "/scripts/launch-agent.sh"
+
+  agent-custom:
+    depends_on:
+      - server
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: agent-custom
+    container_name: rcrs-agent-custom
+    volumes:
+      - ./rcrs-agent/launch-agent.sh:/scripts/launch-agent.sh:ro
+      - ./results:/app/results
+      - shared_data:/app/shared
+      - ../ait-rescue:/app/rcrs-agent
     environment:
       - EXPERIMENT_NAME
       - RUN_TYPE

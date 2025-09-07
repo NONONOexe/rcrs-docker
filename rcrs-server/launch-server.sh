@@ -1,31 +1,35 @@
 #!/bin/bash
 set -e
 
+RESULT_DIR="/app/results/${EXPERIMENT_NAME}/${RUN_TYPE}/server"
+RESULT_LOG_DIR="${RESULT_DIR}/logs"
+
+LOG_DIR="/app/rcrs-server/logs/log"
+KERNEL_LOG_FILE="$LOG_DIR/kernel.log"
+
 cd /app/rcrs-server/scripts
 
 # Function to archive logs
 archive_logs() {
-  if [ -n "$EXPERIMENT_NAME" ]; then
-    echo ">>> Archiving logs for experiment: $EXPERIMENT_NAME"
-
-    SOURCE_LOG_DIR="/app/rcrs-server/logs/log"
-    DEST_DIR="/app/results/${EXPERIMENT_NAME}/server"
-
-    if [ -d "$DEST_DIR" ]; then
-      echo "    -> Removing existing directory: $DEST_DIR"
-      rm -rf "$DEST_DIR"
-    fi
-
-    echo "    -> Creating new directory: $DEST_DIR"
-    mkdir -p "$DEST_DIR"
-
-    echo "    -> Copying logs..."
-    cp -a "$SOURCE_LOG_DIR/." "$DEST_DIR/"
-
-    echo "Logs archived to: $DEST_DIR"
-  else
+  if [ ! -n "$EXPERIMENT_NAME" ]; then
     echo ">>> EXPERIMENT_NAME not set. Skipping log archiving."
+    return
   fi
+
+  echo ">>> Archiving logs for experiment: $EXPERIMENT_NAME"
+
+  if [ -d "$RESULT_LOG_DIR" ]; then
+    echo "    -> Removing existing directory: $RESULT_LOG_DIR"
+    rm -rf "$RESULT_LOG_DIR"
+  fi
+
+  echo "    -> Creating new directory: $RESULT_LOG_DIR"
+  mkdir -p "$RESULT_LOG_DIR"
+
+  echo "    -> Copying logs..."
+  cp -a "$LOG_DIR/." "$RESULT_LOG_DIR/"
+
+  echo "Logs archived to: $RESULT_LOG_DIR"
 }
 
 # Determine which map to use
@@ -56,15 +60,20 @@ fi
 
 MAP_ARGS="-m ${MAP_DIR_TO_USE}/map -c ${MAP_DIR_TO_USE}/config"
 
-
 case "$RUN_TYPE" in
   precompute)
     # Start precomputation in the background
     ./start-precompute.sh $MAP_ARGS -g 2>&1 | tee console.log &
 
     # Get the PID of the main Java process in the server
-    sleep 3
-    JAVA_PID=$(pgrep -f "kernel.StartKernel" | head -n 1)
+    JAVA_PID=""
+    for _ in $(seq 30); do
+      JAVA_PID=$(pgrep -f "kernel.StartKernel" | head -n 1)
+      if [ -n "$JAVA_PID" ]; then
+        break
+      fi
+      sleep 1
+    done
     if [ -z "$JAVA_PID" ]; then
       echo "[ERROR] Failed to find the server's main Java process." >&2
       exit 1
@@ -85,21 +94,35 @@ case "$RUN_TYPE" in
     sleep 2
 
     # Archive logs
-    mkdir -p ../logs/log
-    mv console.log ../logs/log/console.log
+    mkdir -p "$LOG_DIR"
+    mv console.log "$LOG_DIR"/console.log
     archive_logs
 
     echo "Server shut down."
     exit 0
     ;;
   comprun)
+    echo ">>> Preapring log directory..."
+    # Prepare log directory and log file
+    echo "    -> Creating new directory: $LOG_DIR"
+    mkdir -p "$LOG_DIR"
+    echo "    -> Creating kernel.log: $LOG_DIR"
+    touch "$KERNEL_LOG_FILE"
+
     # Start comprun in the background
     ./start-comprun.sh $MAP_ARGS -g 2>&1 | tee console.log &
     SERVER_LAUNCHER_PID=$!
 
     # Get the PID of the main Java process in the server
-    sleep 3
-    JAVA_PID=$(pgrep -f "kernel.StartKernel" | head -n 1)
+    echo "Waiting for the server to start..."
+    JAVA_PID=""
+    for _ in $(seq 30); do
+      JAVA_PID=$(pgrep -f "kernel.StartKernel" | head -n 1)
+      if [ -n "$JAVA_PID" ]; then
+        break
+      fi
+      sleep 1
+    done
     if [ -z "$JAVA_PID" ]; then
       echo "[ERROR] Failed to find the server's main Java process." >&2
       exit 1
@@ -108,12 +131,13 @@ case "$RUN_TYPE" in
     echo "Server process group started. Main PID: $JAVA_PID, PGID: $PGID"
 
     # Start watchdog to monitor kernel log for shutdown message
-    LOG_FILE="../logs/log/kernel.log"
+    TIME_STEP_PATTERN="INFO kernel : Timestep [0-9]+ complete"
     SHUTDOWN_MESSAGE="INFO kernel : Kernel has shut down"
-    mkdir -p ../logs/log
-    touch "$LOG_FILE"
     (
-      tail -f -n 0 "$LOG_FILE" | while read -r line; do
+      tail -F -n 0 "$KERNEL_LOG_FILE" | while read -r line; do
+        if [[ "$line" =~ $TIME_STEP_PATTERN ]]; then
+          echo "$line"
+        fi
         if [[ "$line" == *"$SHUTDOWN_MESSAGE"* ]]; then
           echo ">>> [WATCHDOG] Kernel shutdown message detected. Forcing termination of remaining processes to prevent hanging..."
           kill -- "-$PGID" 2>/dev/null || true
